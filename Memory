@@ -1,0 +1,105 @@
+# implementation of card game - Memory
+
+import simplegui
+import random
+
+
+# helper function to initialize globals
+def new_game():
+    global stringaturn, turn, numbers1, numbers2, exposed, cards, state, got_right, got_pending
+    got_pending = [] 
+    got_right = [] 
+    state = 0
+    turn = 0
+    numbers1 = range (8)
+    numbers2 = range (8)
+    random.shuffle (numbers1)
+    random.shuffle (numbers2)
+    numbers1.extend(numbers2)
+#    print numbers1
+    exposed = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+#    print exposed 
+    cards = range (17)
+# helper function to initialize cards
+    n = 0
+    while n<17:
+          cards [n] = n*50
+          n +=1
+#    print 'cards', cards
+    stringaturn = 'Turn = ' + str (turn)
+    label.set_text(stringaturn)
+
+# define event handlers
+def click(pos):
+    global numbers1, cards, exposed, state, turn, got_right, got_pending
+    choice = pos [0]/50 % 16
+#    print 'pos ', pos[0]
+  #  print choice
+    if exposed [choice] <1:
+       if state == 0:
+           exposed [choice] =1
+           state = 1
+           got_pending.append(choice) 
+          # print 'got pending', got_pending [-1] 
+       elif state == 1:
+             exposed [choice] =2
+          #   print 'numbers1', numbers1[choice] 
+             if numbers1[choice] == numbers1[got_pending[-1]]:
+                got_right.append (choice)
+                got_right.append (got_pending[-1])
+                exposed [choice] = 9
+                exposed [got_pending[-1]] = 9
+                got_pending.pop()
+                state = 0  
+               # print 'got it right'  
+             else: 
+                state =2
+                got_pending.append(choice)       
+             turn +=1 
+             stringaturn = 'Turn = ' + str (turn)
+             label.set_text(stringaturn)     
+       else:
+            exposed [choice] = 2
+            exposed [got_pending[-1]] = 0
+            got_pending.pop()
+            exposed [got_pending[-1]] = 0
+            got_pending.pop() 
+            state = 1
+            got_pending.append(choice)  
+       #state = 2
+       #turn +=1 
+       #stringaturn = 'Turn = ' + str (turn)
+       #label.set_text(stringaturn)
+       #print 'else situatione 2'  
+
+        
+        
+# cards are logically 50x100 pixels in size    
+def draw(canvas):
+    global cards
+    n=0
+    while n<16:
+          if exposed [n] <1:
+             canvas.draw_polygon([(cards[n], 100), (cards [n],0), (cards [n+1], 0), (cards [n+1], 100)], 5, 'white', 'Green')
+          else:
+             canvas.draw_text(str(numbers1[n]), ((cards[n])+10, 70), 50, 'red')
+          n+=1
+                    
+                    
+# create frame and add a button and labels
+frame = simplegui.create_frame("Memory", 800, 100)
+frame.add_button("Restart", new_game)
+label = frame.add_label('Turn = ')
+
+
+# register event handlers
+#frame.set_mouseclick_handler(mouseclick)
+frame.set_draw_handler(draw)
+frame.set_mouseclick_handler(click)
+
+# get things rolling
+new_game()
+frame.start()
+
+
+# Always remember to review the grading rubric
