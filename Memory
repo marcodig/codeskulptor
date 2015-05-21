@@ -2,7 +2,7 @@
 
 import simplegui
 import random
-#commento per verificare
+
 
 # helper function to initialize globals
 def new_game():
