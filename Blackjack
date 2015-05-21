@@ -1,0 +1,230 @@
+# Mini-project #6 - Blackjack
+
+import simplegui
+import random
+
+# load card sprite - 949x392 - source: jfitz.com
+CARD_SIZE = (73, 98)
+CARD_CENTER = (36.5, 49)
+card_images = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/cards.jfitz.png")
+
+CARD_BACK_SIZE = (71, 96)
+CARD_BACK_CENTER = (35.5, 48)
+card_back = simplegui.load_image("http://commondatastorage.googleapis.com/codeskulptor-assets/card_back.png")    
+
+# initialize some useful global variables
+in_play = False
+outcome = ""
+score1 = 0
+score2 = 0
+
+# define globals for cards
+SUITS = ('C', 'S', 'H', 'D')
+RANKS = ('A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K')
+VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 'T':10, 'J':10, 'Q':10, 'K':10}
+
+# define card class
+class Card:
+    def __init__(self, suit, rank):
+        if (suit in SUITS) and (rank in RANKS):
+            self.suit = suit
+            self.rank = rank
+        else:
+            self.suit = None
+            self.rank = None
+            print "Invalid card: ", suit, rank
+
+    def __str__(self):
+        return self.suit + self.rank
+
+    def get_suit(self):
+        return self.suit
+
+    def get_rank(self):
+        return self.rank
+
+    def draw(self, canvas, pos):
+        card_loc = (CARD_CENTER[0] + CARD_SIZE[0] * RANKS.index(self.rank), 
+                    CARD_CENTER[1] + CARD_SIZE[1] * SUITS.index(self.suit))
+        canvas.draw_image(card_images, card_loc, CARD_SIZE, [pos[0] + CARD_CENTER[0], pos[1] + CARD_CENTER[1]], CARD_SIZE)
+    
+    def drawback(self, canvas, pos):
+        card_loc = (CARD_BACK_CENTER[0], 
+                    CARD_BACK_CENTER[1])
+        canvas.draw_image(card_back, card_loc, CARD_BACK_SIZE, [pos[0] + CARD_BACK_CENTER[0], pos[1] + CARD_BACK_CENTER[1]], CARD_BACK_SIZE)    
+        
+# define hand class
+class Hand:
+    def __init__(self):
+          self.cards = []
+        
+    def __str__(self):
+          i = 0
+          output = []
+          for i in range(len (self.cards)):
+             # print self.cards[i].get_rank()
+             # print self.cards[i].get_suit()  
+              output.append (self.cards[i].get_rank()) 
+              output.append (self.cards[i].get_suit())  
+         # print 'stringa ', str (output)
+          return str (output)
+    
+    def add_card(self, card):
+        self.cards.append (card)
+        
+    def get_value(self):
+        i = 0
+        value = 0
+        aces = 0
+        for i in range(len (self.cards)):
+            if self.cards[i].get_rank() == 'A':
+               value +=10   
+               aces +=1
+            value += VALUES.get((self.cards[i].get_rank()))
+            if value >21:
+               while aces >0:
+                     value -=10
+                     aces -=1
+            #print 'valore e ', value
+            #print 'i e ', i
+        return value
+   
+    def draw(self, canvas, pos):
+        posa = [0,0]
+        i = 0
+        for i in range(len (self.cards)):
+            posa[0] = pos[0]+i*CARD_SIZE[0]
+            posa[1] = pos[1]
+            self.cards[i].draw (canvas, posa)
+    
+    def drawback(self, canvas, pos):
+        posa = [0,0]
+        i = 0
+        for i in range(len (self.cards)):
+            posa[0] = pos[0]+i*CARD_SIZE[0]
+            posa[1] = pos[1]
+            self.cards[i].drawback (canvas, posa)
+            
+# define deck class 
+class Deck:
+    def __init__(self):
+        self.allcards = []
+        for s in SUITS:
+            for r in RANKS:
+                newcard = Card (s,r)
+                self.allcards.append (newcard)
+        
+    def shuffle(self):
+        random.shuffle(self.allcards)
+
+    def deal_card(self):
+        return self.allcards.pop()
+    
+    def __str__(self):
+          i = 0
+          output = []
+          for i in range(len (self.allcards)):
+             # print self.cards[i].get_rank()
+             # print self.cards[i].get_suit()  
+              output.append (self.allcards[i].get_rank()) 
+              output.append (self.allcards[i].get_suit())  
+          #print 'deck ', str (output)
+          return str (output)
+
+def reset():
+    global score1, score2
+    score1 = 0
+    score2 = 0 
+    deal()
+    
+#define event handlers for buttons
+def deal():
+    global initialdeck, outcome, in_play, score, player, computerhand, stringtoprint, score1, score2, string_to_print2, status
+    outcome = False
+    if in_play == True:
+       score2+=1
+    initialdeck = Deck()
+    initialdeck.shuffle()
+    card = initialdeck.deal_card()
+    card2 = initialdeck.deal_card()
+    computercard = initialdeck.deal_card()
+    computercard2 = initialdeck.deal_card()
+    player = Hand()
+    player.add_card(card)
+    player.add_card(card2)
+    computerhand = Hand ()
+    computerhand.add_card (computercard)
+    computerhand.add_card (computercard2)
+    in_play = True
+    status = 'Hit or Stand?'
+
+
+def hit():
+    global in_play, score2, player, computerhand, status
+    if in_play == True:
+       extracard = Card ("S", "A")
+       extracard = initialdeck.deal_card()
+       player.add_card(extracard)
+       if player.get_value()>21:
+          score2 +=1
+          in_play = False 
+          status = 'You lost, deal again?'
+       
+def stand():
+    global status, initialdeck, outcome, in_play, score, player, computerhand, stringtoprint, score1, score2, string_to_print2
+    outcome = True
+    if in_play == True:
+       while computerhand.get_value() <17:
+             extracard = Card ("S", "A")
+             extracard = initialdeck.deal_card()
+             computerhand.add_card(extracard)
+       if computerhand.get_value()>21:
+               score1 +=1
+               status = 'You won, deal again?'     
+               in_play = False 
+       elif computerhand.get_value() >= player.get_value():
+          score2 +=1
+          in_play = False 
+          status = 'You lost, deal again?'              
+       else: 
+          score1 +=1
+          in_play = False
+          status = 'You won, deal again?'
+            
+# draw handler    
+def draw(canvas):
+    global score1, score2, player, outcome, in_play
+    # test to make sure that card.draw works, replace with your code below
+    player.draw(canvas, [100, 400])
+    if outcome == True:
+       computerhand.draw(canvas, [100,150])
+       string_to_print3 = "Computer card values " + str(computerhand.get_value())
+       canvas.draw_text(string_to_print3,[30, 100], 30, "white")
+    else:
+       computerhand.drawback(canvas, [100,150])    
+    string_to_print = "Computer " + str(score2) + "                     Player " + str(score1)
+    string_to_print2 = "Player card values " + str(player.get_value())
+    canvas.draw_text("Blackjack",[100, 350], 100, "black") 
+    canvas.draw_text(string_to_print,[30, 50], 30, "navy") 
+    canvas.draw_text(string_to_print2,[30, 550], 30, "navy") 
+    canvas.draw_text(string_to_print2,[30, 550], 30, "navy")
+    canvas.draw_text(status,[310, 550], 30, "white")
+    
+# initialization frame
+frame = simplegui.create_frame("Blackjack", 600, 600)
+frame.set_canvas_background("Green")
+
+
+#create buttons and canvas callback
+frame.add_button("Reset", reset, 200)
+frame.add_button("Deal", deal, 200)
+frame.add_button("Hit",  hit, 200)
+frame.add_button("Stand", stand, 200)
+frame.set_draw_handler(draw)
+
+# get things rolling
+deal()
+frame.start()
+
+
+# remember to review the gradic rubric
